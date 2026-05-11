@@ -1,0 +1,221 @@
+// Carrinho de compras simplificado
+let carrinho = [];
+
+// Função para adicionar produto ao carrinho
+function adicionarAoCarrinho(nome, preco) {
+    carrinho.push({ nome: nome, preco: preco });
+    
+    // Atualiza o contador do carrinho
+    atualizarContadorCarrinho();
+    
+    // Feedback visual
+    mostrarNotificacao(
+        'Produto adicionado!',
+        nome + ' foi adicionado ao seu carrinho.\n\n' +
+        'Valor: R$ ' + preco.toFixed(2) + '\n' +
+        'Total no carrinho: R$ ' + calcularTotal().toFixed(2)
+    );
+    
+    // Animação no botão clicado
+    if (event && event.target) {
+        const botao = event.target;
+        botao.style.transform = 'scale(0.95)';
+        botao.style.backgroundColor = '#1B5E20';
+        setTimeout(() => {
+            botao.style.transform = 'scale(1)';
+            botao.style.backgroundColor = '';
+        }, 300);
+    }
+}
+
+// Função para calcular o total do carrinho
+function calcularTotal() {
+    return carrinho.reduce((total, item) => total + item.preco, 0);
+}
+
+// Função para atualizar o contador do carrinho na navegação
+function atualizarContadorCarrinho() {
+    const linkCarrinho = document.getElementById('link-carrinho');
+    if (linkCarrinho) {
+        linkCarrinho.textContent = 'Meu Carrinho (' + carrinho.length + ')';
+    }
+}
+
+// Função para mostrar notificação na tela
+function mostrarNotificacao(titulo, mensagem) {
+    const divNotificacao = document.createElement('div');
+    divNotificacao.className = 'notificacao';
+    divNotificacao.setAttribute('role', 'alert');
+    divNotificacao.setAttribute('aria-live', 'polite');
+    
+    divNotificacao.innerHTML = '<strong>' + titulo + '</strong><br>' + mensagem.replace(/\n/g, '<br>');
+    
+    document.body.appendChild(divNotificacao);
+    
+    // Remove a notificação após 3 segundos
+    setTimeout(() => {
+        divNotificacao.style.transition = 'opacity 0.5s';
+        divNotificacao.style.opacity = '0';
+        setTimeout(() => {
+            if (divNotificacao.parentNode) {
+                divNotificacao.parentNode.removeChild(divNotificacao);
+            }
+        }, 500);
+    }, 3000);
+}
+
+// Adiciona estilos para notificação dinamicamente
+(function() {
+    const estiloNotificacao = document.createElement('style');
+    estiloNotificacao.textContent = `
+        .notificacao {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #000000;
+            color: #FFFFFF;
+            padding: 24px;
+            border-radius: 12px;
+            font-size: 18px;
+            border: 3px solid #2E7D32;
+            z-index: 1000;
+            max-width: 400px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+    `;
+    document.head.appendChild(estiloNotificacao);
+})();
+
+// Configuração da funcionalidade de busca
+document.addEventListener('DOMContentLoaded', function() {
+    const campoBusca = document.getElementById('campo-busca');
+    const botaoBuscar = document.getElementById('botao-buscar');
+    const linkCarrinho = document.getElementById('link-carrinho');
+    
+    // Inicializa o contador do carrinho
+    atualizarContadorCarrinho();
+    
+    // Evento de clique no botão buscar
+    if (botaoBuscar) {
+        botaoBuscar.addEventListener('click', realizarBusca);
+    }
+    
+    // Evento de pressionar Enter no campo de busca
+    if (campoBusca) {
+        campoBusca.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                realizarBusca();
+            }
+        });
+        
+        // Limpar destaques ao clicar no campo de busca
+        campoBusca.addEventListener('click', limparDestaques);
+    }
+    
+    // Navegação suave para seções
+    document.querySelectorAll('.nav-link[data-nav]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('data-nav');
+            const target = document.getElementById(targetId);
+            if (target) {
+                target.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    });
+    
+    // Configurar link do carrinho
+    if (linkCarrinho) {
+        linkCarrinho.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (carrinho.length === 0) {
+                mostrarNotificacao(
+                    'Carrinho Vazio',
+                    'Seu carrinho está vazio. Adicione produtos para continuar.'
+                );
+            } else {
+                let resumo = 'Resumo do Carrinho:\n\n';
+                carrinho.forEach((item, index) => {
+                    resumo += (index + 1) + '. ' + item.nome + ' - R$ ' + item.preco.toFixed(2) + '\n';
+                });
+                resumo += '\nTotal: R$ ' + calcularTotal().toFixed(2);
+                mostrarNotificacao('Meu Carrinho (' + carrinho.length + ' itens)', resumo);
+            }
+        });
+    }
+});
+
+// Função para realizar a busca de produtos
+function realizarBusca() {
+    const campoBusca = document.getElementById('campo-busca');
+    if (!campoBusca) return;
+    
+    const termo = campoBusca.value.trim();
+    
+    if (termo === '') {
+        mostrarNotificacao(
+            'Busca',
+            'Por favor, digite o que você procura no campo de busca.'
+        );
+        return;
+    }
+    
+    // Destaca os produtos que contêm o termo
+    const produtos = document.querySelectorAll('.produto-card');
+    let encontrados = 0;
+    let primeiroEncontrado = null;
+    
+    produtos.forEach(produto => {
+        const nome = produto.querySelector('.produto-nome');
+        const descricao = produto.querySelector('.produto-descricao');
+        const beneficios = produto.querySelector('.produto-beneficios');
+        
+        const textoProduto = (
+            (nome ? nome.textContent : '') + ' ' +
+            (descricao ? descricao.textContent : '') + ' ' +
+            (beneficios ? beneficios.textContent : '')
+        ).toLowerCase();
+        
+        if (textoProduto.includes(termo.toLowerCase())) {
+            produto.style.border = '4px solid var(--verde)';
+            produto.style.backgroundColor = '#F0FFF0';
+            encontrados++;
+            
+            if (!primeiroEncontrado) {
+                primeiroEncontrado = produto;
+            }
+        } else {
+            produto.style.border = '3px solid var(--cinza-medio)';
+            produto.style.backgroundColor = 'var(--branco)';
+        }
+    });
+    
+    // Feedback da busca
+    if (encontrados === 0) {
+        mostrarNotificacao(
+            'Nenhum resultado',
+            'Nenhum produto encontrado para "' + termo + '".\nTente: bengala, cadeira de rodas, rampa, barra de apoio...'
+        );
+    } else {
+        mostrarNotificacao(
+            'Resultados da busca',
+            'Encontramos ' + encontrados + ' produto(s) para "' + termo + '"!'
+        );
+        
+        // Rola até o primeiro produto encontrado
+        if (primeiroEncontrado) {
+            setTimeout(() => {
+                primeiroEncontrado.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 500);
+        }
+    }
+}
+
+// Função para limpar os destaques da busca
+function limparDestaques() {
+    const produtos = document.querySelectorAll('.produto-card');
+    produtos.forEach(produto => {
+        produto.style.border = '';
+        produto.style.backgroundColor = '';
+    });
+}
